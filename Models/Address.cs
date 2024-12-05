@@ -1,12 +1,21 @@
-﻿namespace ProductManagement.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ProductManagement.Models
 {
     public class Address
     {
-        public int Id { get; set; }
-        public string Street { get; set; }
-        public string City { get; set; }
-        public string PostalCode { get; set; }
-        public int UserId { get; set; }
+        public int Id { get; set; } 
+
+        [Required]
+        public string Street { get; set; } 
+
+        [Required]
+        public string City { get; set; } 
+
+        [Required]
+        public string PostalCode { get; set; } 
+
+        public int UserId { get; set; } 
         public User User { get; set; }
 
     }
