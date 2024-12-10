@@ -13,7 +13,7 @@ namespace ProductManagement.Models
         [EmailAddress]
         public string Email { get; set; } 
 
-        public Address Address { get; set; }
+        public Address? Address { get; set; }
 
         public ICollection<Order> Orders { get; set; } = new List<Order>(); 
 

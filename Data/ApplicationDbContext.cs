@@ -5,11 +5,6 @@ namespace ProductManagement.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        //public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) 
-        //{
-        //ApplicationDbContext for multiple database
-        //}
-
         public ApplicationDbContext(DbContextOptions options) : base(options)
         {
 
@@ -22,7 +17,6 @@ namespace ProductManagement.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // User
             modelBuilder.Entity<User>(entity =>
             {
                 entity.Property(u => u.Name)
@@ -32,7 +26,6 @@ namespace ProductManagement.Data
                       .IsRequired(); 
             });
 
-            // Address
             modelBuilder.Entity<Address>(entity =>
             {
                 entity.Property(a => a.Street)
@@ -42,24 +35,25 @@ namespace ProductManagement.Data
                       .IsRequired();
 
                 entity.Property(a => a.PostalCode)
-                      .IsRequired(); 
+                      .IsRequired();
 
-                entity.HasOne(a => a.User)
-                      .WithOne(u => u.Address)
-                      .HasForeignKey<Address>(a => a.UserId); // One-to-One relationship
+                modelBuilder.Entity<Address>()
+                            .HasOne(a => a.User)
+                            .WithOne(u => u.Address)
+                            .HasForeignKey<Address>(a => a.UserId);
             });
 
-            // Product
+
             modelBuilder.Entity<Product>(entity =>
             {
                 entity.Property(p => p.Name)
                       .IsRequired(); 
 
                 entity.Property(p => p.Price)
-                      .IsRequired(); // Required field with decimal type
+                      .IsRequired(); 
             });
 
-            // Order
+
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.Property(o => o.OrderDate)
@@ -67,24 +61,26 @@ namespace ProductManagement.Data
 
                 entity.HasOne(o => o.User)
                       .WithMany(u => u.Orders)
-                      .HasForeignKey(o => o.UserId); // One-to-Many relationship
+                      .HasForeignKey(o => o.UserId); 
             });
 
-            // OrderItem
+ 
             modelBuilder.Entity<OrderItem>(entity =>
             {
-                entity.HasKey(oi => new { oi.OrderId, oi.ProductId }); // Composite primary key
+                entity.HasKey(oi => new { oi.OrderId, oi.ProductId });
 
                 entity.Property(oi => oi.Quantity)
-                      .IsRequired(); 
+                      .IsRequired();
 
                 entity.HasOne(oi => oi.Order)
                       .WithMany(o => o.OrderItems)
-                      .HasForeignKey(oi => oi.OrderId);
+                      .HasForeignKey(oi => oi.OrderId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(oi => oi.Product)
                       .WithMany(p => p.OrderItems)
-                      .HasForeignKey(oi => oi.ProductId);
+                      .HasForeignKey(oi => oi.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
 

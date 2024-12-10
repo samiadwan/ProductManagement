@@ -15,8 +15,8 @@ namespace ProductManagement.Models
         [Required]
         public string PostalCode { get; set; } 
 
-        public int UserId { get; set; } 
-        public User User { get; set; }
+        public int? UserId { get; set; } 
+        public User? User { get; set; }
 
     }
 }
