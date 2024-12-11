@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using DataAccessLayer.AccessLayer;
+using DataAccessLayer.AccessLayer.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ProductManagement.Data;
-using ProductManagement.Models;
+using ProductManagement.DTOs;
 
 namespace ProductManagement.Controllers
 {
@@ -11,10 +13,13 @@ namespace ProductManagement.Controllers
     public class OrderItemController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public OrderItemController(ApplicationDbContext context)
+        private readonly IValidator<OrderItemDto> _validator;
+        private readonly IMapper _mapper;
+        public OrderItemController(ApplicationDbContext context, IMapper mapper, IValidator<OrderItemDto> validator)
         {
             _context = context;
+            _mapper = mapper;
+            _validator = validator;
         }
 
 
@@ -22,7 +27,8 @@ namespace ProductManagement.Controllers
         public async Task<IActionResult> GetOrderItems()
         {
             var orderItems = await _context.OrderItem.ToListAsync();
-            return Ok(orderItems);
+            var orderItemDtos = _mapper.Map<List<OrderItemDto>>(orderItems);
+            return Ok(orderItemDtos);
         }
 
         [HttpGet("{orderId}/{productId}")]
@@ -33,27 +39,30 @@ namespace ProductManagement.Controllers
             {
                 return NotFound();
             }
+            var orderItemDto = _mapper.Map<OrderItemDto>(orderItem);
             return Ok(orderItem);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateOrderItem([FromBody] OrderItem orderItem)
+        public async Task<IActionResult> CreateOrderItem([FromBody] OrderItemDto orderItemDto)
         {
-            if (!ModelState.IsValid)
+            var validationResult = _validator.Validate(orderItemDto);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors);
             }
-            var existingItem = await _context.OrderItem.FirstOrDefaultAsync(oi => oi.OrderId == orderItem.OrderId && oi.ProductId == orderItem.ProductId);
+            var existingItem = await _context.OrderItem.FirstOrDefaultAsync(oi => oi.OrderId == orderItemDto.OrderId && oi.ProductId == orderItemDto.ProductId);
 
             if (existingItem != null)
             {
                 return BadRequest("OrderItem with the same OrderId and ProductId already exists.");
             }
 
-            _context.OrderItem.Add(orderItem);
+            var newOrderItem = _mapper.Map<OrderItem>(orderItemDto);
+            _context.OrderItem.Add(newOrderItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetOrderItem), new { orderId = orderItem.OrderId, productId = orderItem.ProductId }, orderItem);
+            return CreatedAtAction(nameof(GetOrderItem), new { orderId = newOrderItem.OrderId, productId = newOrderItem.ProductId }, orderItemDto);
         }
     }
 }

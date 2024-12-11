@@ -1,14 +1,13 @@
+using DataAccessLayer.AccessLayer;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
-using ProductManagement.Data;
-using ProductManagement.Models;
-using ProductManagement.Validators;
-using System;
+using ProductManagement.Infrastructure.Mapping;
+using ProductManagement.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -20,17 +19,15 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+     options => options.MigrationsAssembly("DataAccessLayer")));
+builder.Services.AddValidators();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-builder.Services.AddScoped<IValidator<User>, UserValidator>();
-builder.Services.AddScoped<IValidator<Address>, AddressValidator>();
-builder.Services.AddScoped<IValidator<Product>, ProductValidator>();
-builder.Services.AddScoped<IValidator<Order>, OrderValidator>();
-builder.Services.AddScoped<IValidator<OrderItem>, OrderItemValidator>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

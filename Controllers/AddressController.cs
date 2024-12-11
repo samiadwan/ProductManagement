@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using DataAccessLayer.AccessLayer;
+using DataAccessLayer.AccessLayer.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ProductManagement.Data;
-using ProductManagement.Models;
-using System.Net;
+using ProductManagement.DTOs;
 
 namespace ProductManagement.Controllers
 {
@@ -12,18 +13,22 @@ namespace ProductManagement.Controllers
     public class AddressController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IValidator<AddressDTO> _validator;
+        private readonly IMapper _mapper;
 
-        public AddressController(ApplicationDbContext context)
+        public AddressController(ApplicationDbContext context, IMapper mapper, IValidator<AddressDTO> validator)
         {
             _context = context;
+            _mapper = mapper;
+            _validator = validator;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAddresses()
         {
             var addresses = await _context.Addresses.Include(a => a.User).ToListAsync();
-           
-            return Ok(addresses);
+            var addressDtos = _mapper.Map<List<AddressDTO>>(addresses);
+            return Ok(addressDtos);
         }
 
         [HttpGet("{id}")]
@@ -34,27 +39,24 @@ namespace ProductManagement.Controllers
             {
                 return NotFound();
             }
-            if (address == null)
-                return NotFound();
-
-            // Avoid accessing User if it is null
-            if (address.User == null)
-                address.User = new User { Name = "No User Linked" };
-            return Ok(address);
+            var addressDto = _mapper.Map<AddressDTO>(address);
+            return Ok(addressDto);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAddress([FromBody] Address address)
+        public async Task<IActionResult> CreateAddress([FromBody] AddressDTO addressDto)
         {
-            if (!ModelState.IsValid)
+            var validationResult = _validator.Validate(addressDto);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors);
             }
-
+            var address = _mapper.Map<Address>(addressDto);
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetAddressById), new { id = address.Id }, address);
+            var createdAddressDto = _mapper.Map<AddressDTO>(address);
+            return CreatedAtAction(nameof(GetAddressById), new { id = address.Id }, createdAddressDto);
         }
     }
 }

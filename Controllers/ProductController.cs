@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using DataAccessLayer.AccessLayer;
+using DataAccessLayer.AccessLayer.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ProductManagement.Data;
-using ProductManagement.Models;
+using ProductManagement.DTOs;
 
 namespace ProductManagement.Controllers
 {
@@ -11,10 +13,14 @@ namespace ProductManagement.Controllers
     public class ProductController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public ProductController(ApplicationDbContext context)
+        private readonly IValidator<ProductDto> _validator;
+        private readonly IMapper _mapper;
+        public ProductController(ApplicationDbContext context, IMapper mapper, IValidator<ProductDto> validator)
         {
             _context = context;
+            _mapper = mapper;
+            _validator = validator;
+
         }
 
 
@@ -22,7 +28,8 @@ namespace ProductManagement.Controllers
         public async Task<IActionResult> GetProducts()
         {
             var products = await _context.Products.ToListAsync();
-            return Ok(products);
+            var productDtos = _mapper.Map<List<ProductDto>>(products);
+            return Ok(productDtos);
         }
 
         [HttpGet("{id}")]
@@ -33,21 +40,23 @@ namespace ProductManagement.Controllers
             {
                 return NotFound();
             }
-            return Ok(product);
+            var productDto = _mapper.Map<List<ProductDto>>(product);
+            return Ok(productDto);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateProduct([FromBody] Product product)
-        {
-            if (!ModelState.IsValid)
+        public async Task<IActionResult> CreateProduct([FromBody] ProductDto productDto)
+       {
+            var validationResult = _validator.Validate(productDto);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors);
             }
-
+            var product = _mapper.Map<Product>(productDto);
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
+            var createdproductDto = _mapper.Map<ProductDto>(product);
+            return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, createdproductDto);
         }
     }
 }

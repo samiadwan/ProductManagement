@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DataAccessLayer.AccessLayer.Models;
 
-namespace ProductManagement.Models
+namespace ProductManagement.DTOs
 {
-    public class OrderItem
+    public class OrderItemDto
     {
         public int? OrderId { get; set; }
         public Order? Order { get; set; }
@@ -12,5 +12,4 @@ namespace ProductManagement.Models
 
         public int Quantity { get; set; }
     }
-
 }

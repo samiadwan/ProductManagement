@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
-using ProductManagement.Models;
+using ProductManagement.DTOs;
 
 namespace ProductManagement.Validators
 {
-    public class OrderItemValidator : AbstractValidator<OrderItem>
+    public class OrderItemValidator : AbstractValidator<OrderItemDto>
     {
         public OrderItemValidator()
         {

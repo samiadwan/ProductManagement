@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
-using ProductManagement.Models;
+using ProductManagement.DTOs;
 
 namespace ProductManagement.Validators
 {
-    public class AddressValidator : AbstractValidator<Address>
+    public class AddressValidator : AbstractValidator<AddressDTO>
     {
         public AddressValidator()
         {

@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
-using ProductManagement.Models;
+using ProductManagement.DTOs;
 
 namespace ProductManagement.Validators
 {
-    public class UserValidator : AbstractValidator<User>
+    public class UserValidator : AbstractValidator<UserDto>
     {
         public UserValidator()
         {
@@ -16,10 +16,7 @@ namespace ProductManagement.Validators
                 .WithMessage("Email is required.")
                 .EmailAddress()
                 .WithMessage("Invalid email format.");
-
-            //RuleFor(user => user.Address)
-            //    .NotNull().WithMessage("Address details are required.");
-
+      
         }
     }
 }

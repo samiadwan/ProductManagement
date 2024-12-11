@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using DataAccessLayer.AccessLayer;
+using DataAccessLayer.AccessLayer.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ProductManagement.Data;
-using ProductManagement.Models;
+using ProductManagement.DTOs;
 
 namespace ProductManagement.Controllers
 {
@@ -11,10 +13,14 @@ namespace ProductManagement.Controllers
     public class UserController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IValidator<UserDto> _validator;
+        private readonly IMapper _mapper;
 
-        public UserController(ApplicationDbContext context)
+        public UserController(ApplicationDbContext context, IMapper mapper, IValidator<UserDto> validator)
         {
             _context = context;
+            _mapper = mapper;
+            _validator = validator;
         }
 
 
@@ -25,7 +31,8 @@ namespace ProductManagement.Controllers
                                 .Include(u => u.Address)  
                                 .Include(u => u.Orders)   
                                 .ToList();
-            return Ok(users);
+            var userDtos = _mapper.Map<List<UserDto>>(users);
+            return Ok(userDtos);
         }
 
 
@@ -41,22 +48,24 @@ namespace ProductManagement.Controllers
             {
                 return NotFound();
             }
-
-            return Ok(user);
+            var userDto = _mapper.Map<UserDto>(user);
+            return Ok(userDto);
         }
 
         [HttpPost]
-        public IActionResult CreateUser([FromBody] User user)
+        public IActionResult CreateUser([FromBody] UserDto userDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var validationResult = _validator.Validate(userDto);
 
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
+            var user = _mapper.Map<User>(userDto);
             _context.Users.Add(user);
             _context.SaveChanges();
-
-            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
+            var createdUserDto = _mapper.Map<UserDto>(user);
+            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, createdUserDto);
         }
 
     }
